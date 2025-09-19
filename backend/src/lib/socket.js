@@ -7,30 +7,37 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
-    credentials: true, // ✅ allow credentials for cookies/auth tokens
+    origin: ["http://localhost:5173"], // Frontend origin(s)
+    credentials: true, // Allow credentials for cookies/auth tokens
   },
 });
 
+// Map to store online users: { userId: socketId }
+const userSocketMap = {};
+
+// Utility function to get socketId by userId
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
-// used to store online users
-const userSocketMap = {}; // {userId: socketId}
-
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
+  console.log("A user connected:", socket.id);
 
+  // Extract userId from handshake query parameters
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+  }
 
-  // io.emit() is used to send events to all the connected clients
+  // Broadcast online users list to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
-    delete userSocketMap[userId];
+    console.log("A user disconnected:", socket.id);
+    // Remove userId entry when socket disconnects
+    if (userId && userSocketMap[userId] === socket.id) {
+      delete userSocketMap[userId];
+    }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
