@@ -1,13 +1,13 @@
 {
   "name": "chat-app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Fullstack Chat Application",
   "main": "index.js",
   "scripts": {
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
     "start": "npm run start --prefix backend"
   },
-  "keywords": [],
+  "keywords": ["chat", "fullstack", "vercel"],
   "author": "",
   "license": "ISC"
 }
