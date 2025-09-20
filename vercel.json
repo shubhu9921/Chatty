@@ -13,8 +13,8 @@
   ],
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/backend/:path*",
+      "destination": "/backend/:path*"
     },
     {
       "source": "/:path*",
