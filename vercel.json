@@ -18,7 +18,10 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/dist/index.html"
+      "destination": "/index.html"
     }
+  ],
+  "ignore": [
+    "frontend/index.html"
   ]
 }
