@@ -3,34 +3,27 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 
-// ✅ Signup Controller
+/**
+ * Signup Controller
+ */
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
 
   try {
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
-    }
 
-    if (password.length < 6) {
+    if (password.length < 6)
       return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({ message: "Email already exists" });
-    }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
 
-    const newUser = new User({
-      fullName,
-      email,
-      password: hashedPassword,
-    });
+    const newUser = await User.create({ fullName, email, password: hashedPassword });
 
-    await newUser.save();
     generateToken(newUser._id, res);
 
     return res.status(201).json({
@@ -45,24 +38,19 @@ export const signup = async (req, res) => {
   }
 };
 
-// ✅ Login Controller
+/**
+ * Login Controller
+ */
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({ message: "Email and password are required" });
-    }
 
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password)))
       return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
 
     generateToken(user._id, res);
 
@@ -78,14 +66,12 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Logout Controller
+/**
+ * Logout Controller
+ */
 export const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", {
-      httpOnly: true,
-      expires: new Date(0),
-    });
-
+    res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) });
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("❌ Error in logout:", error);
@@ -93,15 +79,16 @@ export const logout = (req, res) => {
   }
 };
 
-// ✅ Update Profile Controller
+/**
+ * Update Profile Controller
+ */
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic } = req.body;
     const userId = req.user?._id;
 
-    if (!profilePic || !userId) {
+    if (!profilePic || !userId)
       return res.status(400).json({ message: "Missing required data" });
-    }
 
     const uploadResult = await cloudinary.uploader.upload(profilePic, {
       folder: "chat-app-profile-pics",
@@ -125,10 +112,12 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// ✅ Check Auth Controller
+/**
+ * Check Auth Controller
+ */
 export const checkAuth = (req, res) => {
   try {
-    return res.status(200).json(req.user);
+    return res.status(200).json(req.user || null);
   } catch (error) {
     console.error("❌ Error in checkAuth:", error);
     return res.status(500).json({ message: "Internal Server Error" });

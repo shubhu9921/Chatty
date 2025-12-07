@@ -6,16 +6,26 @@ import { getMessages, getUsersForSidebar, sendMessage } from "../controllers/mes
 
 const router = express.Router();
 
-// Auth routes
-router.post("/signup", signup);
-router.post("/login", login);
-router.post("/logout", logout);
-router.put("/update-profile", protectRoute, updateProfile);
-router.get("/check", protectRoute, checkAuth);
+// ==================== AUTH ROUTES ====================
+// Signup, Login, Logout
+router.post("/auth/signup", signup);
+router.post("/auth/login", login);
+router.post("/auth/logout", logout);
 
-// Message routes
+// Profile update (protected)
+router.put("/auth/update-profile", protectRoute, updateProfile);
+
+// Check authentication (protected)
+router.get("/auth/check", protectRoute, checkAuth);
+
+// ==================== MESSAGE ROUTES ====================
+// Get all users for sidebar (protected)
 router.get("/users", protectRoute, getUsersForSidebar);
-router.get("/:id", protectRoute, getMessages);
-router.post("/send/:id", protectRoute, sendMessage);
+
+// Get messages with specific user (protected)
+router.get("/messages/:id", protectRoute, getMessages);
+
+// Send a message to a specific user (protected)
+router.post("/messages/send/:id", protectRoute, sendMessage);
 
 export default router;
