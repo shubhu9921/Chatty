@@ -9,7 +9,9 @@ export const useChatStore = create((set, get) => ({
   users: [],
   selectedUser: null,
   isUsersLoading: false,
+  isUsersLoading: false,
   isMessagesLoading: false,
+  unreadMessages: {}, // New state for unread counts
 
   // Fetch all users for sidebar
   getUsers: async () => {
@@ -29,7 +31,7 @@ export const useChatStore = create((set, get) => ({
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
-      const res = await axiosInstance.get(`/${userId}`);
+      const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
     } catch (error) {
       console.error("getMessages error:", error?.response?.data || error);
@@ -45,7 +47,7 @@ export const useChatStore = create((set, get) => ({
     if (!selectedUser) return;
 
     try {
-      const res = await axiosInstance.post(`/send/${selectedUser._id}`, messageData);
+      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
       set({ messages: [...messages, res.data] });
     } catch (error) {
       console.error("sendMessage error:", error?.response?.data || error);
@@ -54,29 +56,46 @@ export const useChatStore = create((set, get) => ({
   },
 
   // Listen for incoming messages via Socket.IO
+  // Listen for incoming messages via Socket.IO
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
     socket.off("newMessage"); // Remove old listeners
+
     socket.on("newMessage", (newMessage) => {
-      if (newMessage.senderId === selectedUser._id) {
-        set({ messages: [...get().messages, newMessage] });
+      const { selectedUser, messages, unreadMessages } = get();
+
+      // If chat is open with this user, add message
+      if (selectedUser?._id === newMessage.senderId) {
+        set({ messages: [...messages, newMessage] });
+      } else {
+        // Otherwise increment unread count
+        toast.success("New message received");
+        set({
+          unreadMessages: {
+            ...unreadMessages,
+            [newMessage.senderId]: (unreadMessages[newMessage.senderId] || 0) + 1,
+          },
+        });
       }
     });
   },
 
   // Set a user as the current chat target
   setSelectedUser: (selectedUser) => {
-    const { unsubscribeFromMessages, subscribeToMessages } = get();
-
-    unsubscribeFromMessages();           // Clean previous listener
     set({ selectedUser, messages: [] }); // Reset messages
-    subscribeToMessages();               // Subscribe to new user's messages
-    get().getMessages(selectedUser._id); // Load messages from backend
+
+    if (selectedUser) {
+      // Clear unread messages for this user
+      set((state) => ({
+        unreadMessages: {
+          ...state.unreadMessages,
+          [selectedUser._id]: 0,
+        },
+      }));
+      get().getMessages(selectedUser._id); // Load messages from backend
+    }
   },
 
   // Stop listening to messages

@@ -13,27 +13,36 @@ import ProfilePage from "./pages/ProfilePage";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
+import { useChatStore } from "./store/useChatStore";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers, socket } = useAuthStore();
   const { theme } = useThemeStore();
+  const { subscribeToMessages, unsubscribeFromMessages } = useChatStore();
 
-  // Log online users for debugging
   useEffect(() => {
     console.log("Online Users:", onlineUsers);
   }, [onlineUsers]);
 
-  // Run auth check once on mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Log auth user for debugging
   useEffect(() => {
     console.log("Auth User:", authUser);
   }, [authUser]);
 
-  // Show loader while checking auth
+  // Socket listener for messaging
+  useEffect(() => {
+    if (authUser && socket?.connected) {
+      subscribeToMessages();
+
+      return () => {
+        unsubscribeFromMessages();
+      };
+    }
+  }, [authUser, socket, subscribeToMessages, unsubscribeFromMessages]);
+
   if (isCheckingAuth && !authUser) {
     return (
       <div className="flex items-center justify-center h-screen">
