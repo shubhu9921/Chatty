@@ -19,7 +19,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:5174", // Verify port 5174
   "http://localhost:5175", // Verify port 5175
-  "https://chatty-eight-gray.vercel.app", // deployed frontend
+  "https://chatty-eight-gray.vercel.app",
+  "https://chatty-zeta-three.vercel.app", // deployed frontend
 ];
 
 app.use(
